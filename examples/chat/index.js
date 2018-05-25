@@ -1,76 +1,91 @@
-// Setup basic express server
+// ملف index.js
+
 var express = require('express');
 var app = express();
 var path = require('path');
 var server = require('http').createServer(app);
-var io = require('../..')(server);
+var io = require('socket.io')(server);
 var port = process.env.PORT || 3000;
 
 server.listen(port, () => {
-  console.log('Server listening at port %d', port);
+    console.log('Server listening at port %d', port);
 });
-
-// Routing
+// تجهيز المجلد - public -
+// للوصول لمحتوايته من خلال روابط الموقع مباشرة 
+// يحتوي هذا المجلد عادة على المحتويات الثابتة من مثل ملفات
+// css و javascript و images  
+// و الأيقونات
+// هذا شيء عام  لكل التطبيقات التي تقوم بعملها
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Chatroom
+// هنا يبدأ منطق التطبيق
 
+// متغير لحفظ عدد المستخدمين في الوقت الواحد
 var numUsers = 0;
 
+// هنا منطق التعامل مع حدث "الارتباط" الجديد مع العميل - المتصفح
+//  حيث يقوم محرك السوكت.ايو بإرسال هذا "الارتباط" كمتغير 
 io.on('connection', (socket) => {
-  var addedUser = false;
+    var addedUser = false;
 
-  // when the client emits 'new message', this listens and executes
-  socket.on('new message', (data) => {
-    // we tell the client to execute 'new message'
-    socket.broadcast.emit('new message', {
-      username: socket.username,
-      message: data
+    // هذا ارتباط خاص لكل مستخدم و هنا تم تحديد أنه عند استقبال الحدث 
+    // new message
+    // data و بيانات الحدث المضمنة في
+    socket.on('new message', (data) => {
+        // فسيقوم الارتباط بإرسال الحدث لكل المستخدمين (الارتباطات ) الآخرين
+        //  مع بيانات مضمنة في كائن يحتوي على اسم المستخدم و الرسالة التي قام بكتابتها المستخدم
+        socket.broadcast.emit('new message', {
+            username: socket.username,
+            message: data
+        });
     });
-  });
 
-  // when the client emits 'add user', this listens and executes
-  socket.on('add user', (username) => {
-    if (addedUser) return;
-
-    // we store the username in the socket session for this client
-    socket.username = username;
-    ++numUsers;
-    addedUser = true;
-    socket.emit('login', {
-      numUsers: numUsers
+    // عند ارتباط مستخدم يمكنه ارسال أي 
+    // حدث (البرمجة عند المتصفح هي من تقوم بالإرسال) و هنا يقوم بإرسال 
+    // حدث "أضف مستخدم" و معه بيان اسم الشخص
+    socket.on('add user', (username) => {
+        if (addedUser) return;
+        // يتم تخزين اسم الشخص في "الارتباط" ليبقى على مدى الارتباط
+        socket.username = username;
+        // هنا نٌعلم أن عدد المستخدمين زاد بمقدار واحد
+        ++numUsers;
+        addedUser = true;
+        // هنا يتم الرد على الشخص بحدث الدخول و معه بيان عدد المستخدمين
+        socket.emit('login', {
+            numUsers: numUsers
+        });
+        //  هنا يتم بعث حدث "شخص جديد" لكل المستخدمين ومعه اسم الشخص و عدد الأشخاص كافة
+        socket.broadcast.emit('user joined', {
+            username: socket.username,
+            numUsers: numUsers
+        });
     });
-    // echo globally (all clients) that a person has connected
-    socket.broadcast.emit('user joined', {
-      username: socket.username,
-      numUsers: numUsers
+
+    // هنا يتم استقبال حدث "جاري الكتابة" ليتم ارساله إلى جميع المستخدمين
+    socket.on('typing', () => {
+        socket.broadcast.emit('typing', {
+            username: socket.username
+        });
     });
-  });
 
-  // when the client emits 'typing', we broadcast it to others
-  socket.on('typing', () => {
-    socket.broadcast.emit('typing', {
-      username: socket.username
+    // هنا يتم استقبال حدث توقف عن الكتابة ليتم ارساله الى جميع المستخدمين
+    socket.on('stop typing', () => {
+        socket.broadcast.emit('stop typing', {
+            username: socket.username
+        });
     });
-  });
 
-  // when the client emits 'stop typing', we broadcast it to others
-  socket.on('stop typing', () => {
-    socket.broadcast.emit('stop typing', {
-      username: socket.username
+    // هنا يتم استقبال حدث انفصال الارتباط و هذا الحدث يقوم محرك العميل في  المتصفح 
+    // بإرساله بطريقة آلية ، أي أن هذا موجود و لو لم تكتب له كود معين 
+    socket.on('disconnect', () => {
+        if (addedUser) {
+            --numUsers;
+
+            // بعد انقاص عدد الأشخاص، يتم إخطار الجميع بأن الشخص غادر
+            socket.broadcast.emit('user left', {
+                username: socket.username,
+                numUsers: numUsers
+            });
+        }
     });
-  });
-
-  // when the user disconnects.. perform this
-  socket.on('disconnect', () => {
-    if (addedUser) {
-      --numUsers;
-
-      // echo globally that this client has left
-      socket.broadcast.emit('user left', {
-        username: socket.username,
-        numUsers: numUsers
-      });
-    }
-  });
 });

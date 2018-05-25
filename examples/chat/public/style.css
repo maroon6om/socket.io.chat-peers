@@ -70,6 +70,7 @@ ul {
   padding-bottom: 15px;
   text-align: center;
   width: 400px;
+  direction: right;
 }
 
 .login.page .title {
@@ -107,6 +108,7 @@ ul {
   font-size: 70%;
   margin: 5px;
   text-align: center;
+  clear: both;
 }
 
 /* Messages */
@@ -127,10 +129,23 @@ ul {
   color: gray;
 }
 
+.message {
+  float: right;
+  clear: both;
+}
+
+.messageBody {
+  max-width: 400px;
+  padding: 10px;
+  border-radius: 20px;
+  text-align: right;
+  direction: rtl;
+}
+
 .username {
   font-weight: 700;
   overflow: hidden;
-  padding-right: 15px;
+  padding-left: 15px;
   text-align: right;
 }
 
@@ -146,4 +161,28 @@ ul {
   position: absolute;
   right: 0;
   width: 100%;
+  text-align: right;
+  direction: rtl;
 }
+
+.speech-bubble {
+  position: relative;
+  background: #00aabb;
+  border-radius: .4em;
+}
+
+.speech-bubble:after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border: 0.469em solid transparent;
+  border-left-color: #00aabb;
+  border-right: 0;
+  border-top: 0;
+  margin-top: -0.266em;
+  margin-right: -0.531em;
+}
+
