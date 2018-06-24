@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>مثال تطبيق محادثة</title>
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body>
+  <ul class="pages">
+    <!-- صفحة المحادثة -->
+    <li class="chat page">
+      <div class="chatArea">
+        <ul class="messages"></ul>
+      </div>
+      <input class="inputMessage" placeholder="اكتب الرسالة هنا"/>
+    </li>
+    <!-- صفحة الدخول -->
+    <li class="login page">
+      <div class="form">
+        <h3 class="title">ما هو اسمك ؟ </h3>
+        <input class="usernameInput" type="text" maxlength="14" />
+      </div>
+    </li>
+  </ul>
+
+  <!-- المكتبات لعمل الصفحة هذه-->
+  <script src="https://code.jquery.com/jquery-1.10.2.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/main.js"></script>
+</body>
+</html>
